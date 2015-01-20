@@ -1,0 +1,29 @@
+{
+	"name": "mahlstrom/CommandLineArg",
+	"description": "Singleton handling commandline arguments",
+	"keywords": [
+		"commandline",
+		"argumnets",
+		""
+	],
+	"license": "BSD-3-Clause",
+	"authors": [
+		{
+			"name": "Magnus Ahlström",
+			"email": "mahlstrom@atuin.se",
+			"role": "Developer"
+		}
+	],
+	"require-dev": {
+		"phpunit/phpunit": "3.7.*"
+	},
+	"require": {
+		"php": ">=5.0.0"
+	},
+	"autoload": {
+		"psr-4":{
+			"mahlstrom\\":"src",
+			"mahlstrom\\test\\":"src/test"
+		}
+	}
+}
