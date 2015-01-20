@@ -26,12 +26,12 @@ class CommandLineArgTest extends PHPUnit_Framework_TestCase
         $this->expStr .= '  -e [<arg>]  --ewef[=<arg>]              blutti (required)'.PHP_EOL;
         $this->expStr .= '  -f <arg>    --fwef=<arg>                blutti (required)'.PHP_EOL;
         CommandLineArg::reset();
-        CommandLineArg::addArguments('awef', 'a', 'blutti');
-        CommandLineArg::addArguments('bwef', 'b', 'blutti', false, false);
-        CommandLineArg::addArguments('cwef', 'c', 'blutti', false, true);
-        CommandLineArg::addArguments('dwef', 'd', 'blutti', true);
-        CommandLineArg::addArguments('ewef', 'e', 'blutti', true, false);
-        CommandLineArg::addArguments('fwef', 'f', 'blutti', true, true);
+        CommandLineArg::addArgument('awef', 'a', 'blutti');
+        CommandLineArg::addArgument('bwef', 'b', 'blutti', false, false);
+        CommandLineArg::addArgument('cwef', 'c', 'blutti', false, true);
+        CommandLineArg::addArgument('dwef', 'd', 'blutti', true);
+        CommandLineArg::addArgument('ewef', 'e', 'blutti', true, false);
+        CommandLineArg::addArgument('fwef', 'f', 'blutti', true, true);
     }
 
     /**

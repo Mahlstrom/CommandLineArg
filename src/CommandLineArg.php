@@ -22,7 +22,7 @@ class CommandLineArg
      * @param bool $isReq
      * @param null $argReqOrNull Null=no argument, False=Not needed, True=required
      */
-    public static function addArguments($longName, $shortName, $description, $isReq = false, $argReqOrNull = null)
+    public static function addArgument($longName, $shortName, $description, $isReq = false, $argReqOrNull = null)
     {
         self::$A[$longName] = [
             'short'       => $shortName,
@@ -77,6 +77,7 @@ class CommandLineArg
     /**
      * @param $arg
      * @param $args
+     * @throws \InvalidArgumentException
      * @return bool
      */
     private static function parseSingleDash($arg, &$args)
@@ -91,8 +92,7 @@ class CommandLineArg
         if ($argName) {
             $value=self::parseValue($args, $argName);
         } else {
-            self::notValidArgument($arg);
-            return false;
+            throw new \InvalidArgumentException($arg . ' is not a valid argument');
         }
 //        echo $argName.' ';
 //        if($value===true){echo '(true)';}
@@ -108,6 +108,7 @@ class CommandLineArg
 
     /**
      * @param $arg
+     * @throws \InvalidArgumentException
      */
     private static function parseDoubleDash($arg)
     {
@@ -120,10 +121,10 @@ class CommandLineArg
         }
 
         if (!array_key_exists($argName, self::$A)) {
-            self::notValidArgument($argName);
+            throw new \InvalidArgumentException($argName . ' is not a valid argument');
         }
         if (self::$A[$argName]['requireArg'] == true && $value == false) {
-            self::requiredError($argName);
+            throw new \InvalidArgumentException($argName . ' must have value.');
         } elseif (self::$A[$argName]['requireArg'] == false && $value == false) {
             $value = true;
         } elseif (self::$A[$argName]['requireArg'] == null && $value != false) {
@@ -162,21 +163,6 @@ class CommandLineArg
     }
 
     /**
-     * @param $arg
-     * @throws \InvalidArgumentException
-     */
-    private static function notValidArgument($arg)
-    {
-        throw new \InvalidArgumentException($arg . ' is not a valid argument');
-    }
-
-
-    private static function requiredError($argName)
-    {
-        throw new \InvalidArgumentException($argName . ' must have value.');
-    }
-
-    /**
      * @param $string
      * @return mixed
      */
@@ -196,6 +182,7 @@ class CommandLineArg
     /**
      * @param $args
      * @param $argName
+     * @throws \InvalidArgumentException
      * @internal param $value
      * @return bool|mixed
      */
@@ -204,7 +191,7 @@ class CommandLineArg
         if (self::$A[$argName]['requireArg'] == true) {
             $value = next($args);
             if ($value == false || substr($value, 0, 1) == '-') {
-                self::requiredError($argName);
+                throw new \InvalidArgumentException($argName . ' must have value.');
             }
         } elseif (self::$A[$argName]['requireArg'] === false) {
             $value = next($args);
