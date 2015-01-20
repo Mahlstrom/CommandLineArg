@@ -3,8 +3,10 @@
 	"description": "Singleton handling commandline arguments",
 	"keywords": [
 		"commandline",
-		"argumnets",
-		""
+		"arguments",
+		"params",
+		"command-line",
+		"command line"
 	],
 	"license": "BSD-3-Clause",
 	"authors": [

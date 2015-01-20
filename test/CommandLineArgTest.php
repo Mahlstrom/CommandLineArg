@@ -3,35 +3,34 @@
  * @author Magnus Ahlstrom <magnus@atuin.se>
  * @time 2015-01-19 22:49
  */
-use mahlstrom\CommandLineArg;
+namespace mahlstrom\test;
 
+use mahlstrom\CommandLineArg;
 
 /**
  * Class CommandLineArgTest
  */
-class CommandLineArgTest extends PHPUnit_Framework_TestCase
+class CommandLineArgTest extends \PHPUnit_Framework_TestCase
 {
 
     protected $expStr;
 
     public function setUp()
     {
-#        $this->expStr .= 'Usage: ide-phpunit.php [OPTIONS]... ' . PHP_EOL;
-#        $this->expStr .= '  -a          --awef            blutti (required)' . PHP_EOL;
         $this->expStr = 'Usage: ide-phpunit.php [OPTIONS]... '.PHP_EOL;
-        $this->expStr .= '  -a          --awef                      blutti'.PHP_EOL;
-        $this->expStr .= '  -b [<arg>]  --bwef[=<arg>]              blutti'.PHP_EOL;
-        $this->expStr .= '  -c <arg>    --cwef=<arg>                blutti'.PHP_EOL;
-        $this->expStr .= '  -d          --dwef                      blutti (required)'.PHP_EOL;
-        $this->expStr .= '  -e [<arg>]  --ewef[=<arg>]              blutti (required)'.PHP_EOL;
-        $this->expStr .= '  -f <arg>    --fwef=<arg>                blutti (required)'.PHP_EOL;
+        $this->expStr .= '  -a          --ano                       Description'.PHP_EOL;
+        $this->expStr .= '  -b [<arg>]  --bnn[=<arg>]               Description'.PHP_EOL;
+        $this->expStr .= '  -c <arg>    --cny=<arg>                 Description'.PHP_EOL;
+        $this->expStr .= '  -d          --dyo                       Description (required)'.PHP_EOL;
+        $this->expStr .= '  -e [<arg>]  --eyn[=<arg>]               Description (required)'.PHP_EOL;
+        $this->expStr .= '  -f <arg>    --fyy=<arg>                 Description (required)'.PHP_EOL;
         CommandLineArg::reset();
-        CommandLineArg::addArgument('awef', 'a', 'blutti');
-        CommandLineArg::addArgument('bwef', 'b', 'blutti', false, false);
-        CommandLineArg::addArgument('cwef', 'c', 'blutti', false, true);
-        CommandLineArg::addArgument('dwef', 'd', 'blutti', true);
-        CommandLineArg::addArgument('ewef', 'e', 'blutti', true, false);
-        CommandLineArg::addArgument('fwef', 'f', 'blutti', true, true);
+        CommandLineArg::addArgument('ano', 'a', 'Description');
+        CommandLineArg::addArgument('bnn', 'b', 'Description', false, false);
+        CommandLineArg::addArgument('cny', 'c', 'Description', false, true);
+        CommandLineArg::addArgument('dyo', 'd', 'Description', true);
+        CommandLineArg::addArgument('eyn', 'e', 'Description', true, false);
+        CommandLineArg::addArgument('fyy', 'f', 'Description', true, true);
     }
 
     /**
@@ -44,38 +43,45 @@ class CommandLineArgTest extends PHPUnit_Framework_TestCase
             '-a',
             '-b',
             '-c','cc',
-            '-d',
             '-e',
             '-f','ff',
+            '-d',
         ];
         CommandLineArg::parse($arguments);
-        $this->assertTrue(CommandLineArg::get('awef'));
-        $this->assertTrue(CommandLineArg::get('bwef'));
-        $this->assertEquals('cc',CommandLineArg::get('cwef'));
-        $this->assertTrue(CommandLineArg::get('dwef'));
-        $this->assertTrue(CommandLineArg::get('ewef'));
-        $this->assertEquals('ff',CommandLineArg::get('fwef'));
+        $this->assertTrue(CommandLineArg::get('ano'));
+        $this->assertTrue(CommandLineArg::get('bnn'));
+        $this->assertEquals('cc', CommandLineArg::get('cny'));
+        $this->assertTrue(CommandLineArg::get('dyo'));
+        $this->assertTrue(CommandLineArg::get('eyn'));
+        $this->assertEquals('ff', CommandLineArg::get('fyy'));
     }
 
-    public function testAllDouble()
+    public function testAllDoubleDashes()
     {
         $arguments=[
             '',
-            '--awef',
-            '--bwef',
-            '--cwef=cc',
-            '--dwef',
-            '--ewef',
-            '--fwef=ff'
+            '--ano=aa',
+            '--bnn',
+            '--cny=cc',
+            '--dyo=dd',
+            '--eyn',
+            '--fyy=ff'
         ];
         CommandLineArg::parse($arguments);
+        $this->assertEquals('aa', CommandLineArg::get('ano'));
+        $this->assertTrue(CommandLineArg::get('bnn'));
+        $this->assertEquals('cc', CommandLineArg::get('cny'));
+        $this->assertEquals('dd', CommandLineArg::get('dyo'));
+        $this->assertTrue(CommandLineArg::get('eyn'));
+        $this->assertEquals('ff', CommandLineArg::get('fyy'));
     }
 
     /**
      * @test
-     * @expectedException InvalidArgumentException
+     * @expectedException \InvalidArgumentException
      */
-    public function globalArgs(){
+    public function globalArgs()
+    {
         CommandLineArg::parse();
     }
 
@@ -85,18 +91,18 @@ class CommandLineArgTest extends PHPUnit_Framework_TestCase
     public function showHelp()
     {
         $this->expectOutputString($this->expStr);
-        CommandLineArg::parse(['awef', '-h']);
+        CommandLineArg::parse(['', '-h']);
         CommandLineArg::reset();
     }
 
     /**
      * @test
-     * @expectedException InvalidArgumentException
+     * @expectedException \InvalidArgumentException
      */
     public function checkInvalidArgument()
     {
         CommandLineArg::reset();
-        CommandLineArg::parse(['','-awef']);
+        CommandLineArg::parse(['', '-wrong']);
     }
 
     /**
@@ -104,18 +110,18 @@ class CommandLineArgTest extends PHPUnit_Framework_TestCase
      */
     public function doRequiredFail()
     {
-        $expStr='dwef is required'.PHP_EOL;
-        $expStr.='ewef is required'.PHP_EOL;
-        $expStr.='fwef is required'.PHP_EOL;
+        $expStr='dyo is required'.PHP_EOL;
+        $expStr.='eyn is required'.PHP_EOL;
+        $expStr.='fyy is required'.PHP_EOL;
         $expStr.=$this->expStr;
         $this->expectOutputString($expStr);
-        CommandLineArg::parse(['', 'b']);
+        CommandLineArg::parse(['', '-a']);
     }
 
     /**
      * @test
-     * @expectedException InvalidArgumentException
-     * @expectedExceptionMessage cwef must have value.
+     * @expectedException \InvalidArgumentException
+     * @expectedExceptionMessage cny must have value.
      */
     public function doRequiredValueFail()
     {
@@ -136,17 +142,16 @@ class CommandLineArgTest extends PHPUnit_Framework_TestCase
      */
     public function doNoRequiredValue()
     {
-        $expStr='awef needs no argument'.PHP_EOL;
-        $expStr.='dwef needs no argument'.PHP_EOL;
-#        $expStr.=$this->expStr;
+        $expStr='bnn needs no argument'.PHP_EOL;
+        $expStr.='eyn needs no argument'.PHP_EOL;
         $this->expectOutputString($expStr);
         $arguments=[
             '',
-            '-a','awef',
-            '-b','awef',
-            '-c','ff',
-            '-d','awef',
-            '-e','awef',
+            '-a','argument',
+            '-b','argument',
+            '-c','argument',
+            '-d','argument',
+            '-e','argument',
             '-f','ff'
         ];
         CommandLineArg::parse($arguments);
