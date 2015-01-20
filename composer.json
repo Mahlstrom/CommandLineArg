@@ -1,12 +1,12 @@
 {
-	"name": "mahlstrom/CommandLineArg",
+	"name": "mahlstrom/commandline-arg",
 	"description": "Singleton handling commandline arguments",
 	"keywords": [
 		"commandline",
 		"arguments",
 		"params",
 		"command-line",
-		"command line"
+		"cli"
 	],
 	"license": "BSD-3-Clause",
 	"authors": [
