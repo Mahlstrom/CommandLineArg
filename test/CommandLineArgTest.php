@@ -17,13 +17,13 @@ class CommandLineArgTest extends \PHPUnit_Framework_TestCase
 
     public function setUp()
     {
-        $this->expStr = 'Usage: ide-phpunit.php [OPTIONS]... '.PHP_EOL;
-        $this->expStr .= '  -a          --ano                       Description'.PHP_EOL;
-        $this->expStr .= '  -b [<arg>]  --bnn[=<arg>]               Description'.PHP_EOL;
-        $this->expStr .= '  -c <arg>    --cny=<arg>                 Description'.PHP_EOL;
-        $this->expStr .= '  -d          --dyo                       Description (required)'.PHP_EOL;
-        $this->expStr .= '  -e [<arg>]  --eyn[=<arg>]               Description (required)'.PHP_EOL;
-        $this->expStr .= '  -f <arg>    --fyy=<arg>                 Description (required)'.PHP_EOL;
+        $this->expStr = 'Usage: ide-phpunit.php [OPTIONS]... ' . PHP_EOL;
+        $this->expStr .= '  -a          --ano                       Description' . PHP_EOL;
+        $this->expStr .= '  -b [<arg>]  --bnn[=<arg>]               Description' . PHP_EOL;
+        $this->expStr .= '  -c <arg>    --cny=<arg>                 Description' . PHP_EOL;
+        $this->expStr .= '  -d          --dyo                       Description (required)' . PHP_EOL;
+        $this->expStr .= '  -e [<arg>]  --eyn[=<arg>]               Description (required)' . PHP_EOL;
+        $this->expStr .= '  -f <arg>    --fyy=<arg>                 Description (required)' . PHP_EOL;
         CommandLineArg::reset();
         CommandLineArg::addArgument('ano', 'a', 'Description');
         CommandLineArg::addArgument('bnn', 'b', 'Description', false, false);
@@ -38,13 +38,15 @@ class CommandLineArgTest extends \PHPUnit_Framework_TestCase
      */
     public function testAllGoodArguments()
     {
-        $arguments=[
+        $arguments = [
             '',
             '-a',
             '-b',
-            '-c','cc',
+            '-c',
+            'cc',
             '-e',
-            '-f','ff',
+            '-f',
+            'ff',
             '-d',
         ];
         CommandLineArg::parse($arguments);
@@ -58,7 +60,7 @@ class CommandLineArgTest extends \PHPUnit_Framework_TestCase
 
     public function testAllDoubleDashes()
     {
-        $arguments=[
+        $arguments = [
             '',
             '--ano=aa',
             '--bnn',
@@ -110,10 +112,10 @@ class CommandLineArgTest extends \PHPUnit_Framework_TestCase
      */
     public function doRequiredFail()
     {
-        $expStr='dyo is required'.PHP_EOL;
-        $expStr.='eyn is required'.PHP_EOL;
-        $expStr.='fyy is required'.PHP_EOL;
-        $expStr.=$this->expStr;
+        $expStr = 'dyo is required' . PHP_EOL;
+        $expStr .= 'eyn is required' . PHP_EOL;
+        $expStr .= 'fyy is required' . PHP_EOL;
+        $expStr .= $this->expStr;
         $this->expectOutputString($expStr);
         CommandLineArg::parse(['', '-a']);
     }
@@ -125,12 +127,13 @@ class CommandLineArgTest extends \PHPUnit_Framework_TestCase
      */
     public function doRequiredValueFail()
     {
-        $arguments=[
+        $arguments = [
             '',
             '-a',
             '-b',
             '-c',
-            '-f','ff',
+            '-f',
+            'ff',
             '-e',
             '-d',
         ];
@@ -142,17 +145,23 @@ class CommandLineArgTest extends \PHPUnit_Framework_TestCase
      */
     public function doNoRequiredValue()
     {
-        $expStr='bnn needs no argument'.PHP_EOL;
-        $expStr.='eyn needs no argument'.PHP_EOL;
+        $expStr = 'bnn needs no argument' . PHP_EOL;
+        $expStr .= 'eyn needs no argument' . PHP_EOL;
         $this->expectOutputString($expStr);
-        $arguments=[
+        $arguments = [
             '',
-            '-a','argument',
-            '-b','argument',
-            '-c','argument',
-            '-d','argument',
-            '-e','argument',
-            '-f','ff'
+            '-a',
+            'argument',
+            '-b',
+            'argument',
+            '-c',
+            'argument',
+            '-d',
+            'argument',
+            '-e',
+            'argument',
+            '-f',
+            'ff'
         ];
         CommandLineArg::parse($arguments);
     }
@@ -163,5 +172,47 @@ class CommandLineArgTest extends \PHPUnit_Framework_TestCase
     public function tryGetWrongValue()
     {
         $this->assertFalse(CommandLineArg::get('fea'));
+    }
+
+    public function testMultipleChars()
+    {
+        CommandLineArg::reset();
+        CommandLineArg::addArgument('ano', 'a', 'Description');
+        CommandLineArg::addArgument('bnn', 'b', 'Description');
+        CommandLineArg::addArgument('cny', 'c', 'Description');
+        CommandLineArg::parse(['', '-abc', 'magnus']);
+        $this->assertTrue(CommandLineArg::get('ano'));
+        $this->assertEquals('magnus', CommandLineArg::get('cny'));
+    }
+
+    public function testMultipleCharsWithOneForcedValue()
+    {
+        $this->expectOutputString('');
+        CommandLineArg::reset();
+        CommandLineArg::addArgument('ano', 'a', 'Description');
+        CommandLineArg::addArgument('bnn', 'b', 'Description');
+        CommandLineArg::addArgument('cny', 'c', 'Description', false, true);
+        CommandLineArg::addArgument('dyo', 'd', 'Description', true);
+        CommandLineArg::addArgument('eyn', 'e', 'Description', true, false);
+        CommandLineArg::addArgument('fyy', 'f', 'Description', true, true);
+        CommandLineArg::parse(['', '-abc', 'magnus','-def','fa']);
+        $this->assertTrue(CommandLineArg::get('ano'));
+        $this->assertEquals('magnus', CommandLineArg::get('cny'));
+    }
+
+    /**
+     * @expectedException \InvalidArgumentException
+     * @expectedExceptionMessage cny must have value.
+     */
+    public function testMultipleCharsWithOneForcedValueWrongOrder()
+    {
+        $this->expectOutputString('');
+        CommandLineArg::reset();
+        CommandLineArg::addArgument('ano', 'a', 'Description');
+        CommandLineArg::addArgument('bnn', 'b', 'Description');
+        CommandLineArg::addArgument('cny', 'c', 'Description', false, true);
+        CommandLineArg::parse(['', '-acb', 'magnus']);
+        $this->assertTrue(CommandLineArg::get('ano'));
+        $this->assertEquals('magnus', CommandLineArg::get('cny'));
     }
 }

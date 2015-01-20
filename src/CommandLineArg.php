@@ -56,7 +56,8 @@ class CommandLineArg
             $args = $argv;
         }
         // Remove first argument as it is the run file itself
-        unset($args[0]);
+        array_shift($args);
+#        unset($args[0]);
 
         // Check if we need to print the help
         if ((in_array(current($args), ['-h', '--help'])) || !count($args)) {
@@ -67,6 +68,9 @@ class CommandLineArg
             if (substr($arg, 0, 2) == '--') {
                 self::parseDoubleDash(substr($arg, 2));
             } elseif (substr($arg, 0, 1) == '-') {
+                if (strlen($arg) > 2) {
+                    $arg = self::splitSingleDash($arg, $args);
+                }
                 self::parseSingleDash(substr($arg, 1), $args);
             }
             next($args);
@@ -85,6 +89,25 @@ class CommandLineArg
         }
         return self::$found;
     }
+
+    private static function splitSingleDash($arg, &$ar)
+    {
+        $currKey = key($ar);
+        $b = str_split(substr($arg, 1));
+        $remKey = $currKey + count($b);
+        foreach ($b as $key => $val) {
+            $b[$key] = '-' . $val;
+        }
+        unset($ar[$currKey]);
+        array_splice($ar, $currKey, 0, $b);
+        array_slice($ar, -1, $remKey);
+        for ($i = 0; $i < $currKey; $i++) {
+            next($ar);
+        }
+        return $b[0];
+    }
+
+
 
     /**
      * Prints help
@@ -124,6 +147,7 @@ class CommandLineArg
      */
     private static function parseSingleDash($arg, &$args)
     {
+
         $argName = false;
         foreach (self::$A as $argKey => $argAr) {
             if ($argAr['short'] == $arg) {
