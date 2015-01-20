@@ -1,6 +1,6 @@
 {
 	"name": "mahlstrom/commandline-arg",
-	"description": "Singleton handling commandline arguments",
+	"description": "Easy-to-use handling commandline arguments",
 	"keywords": [
 		"commandline",
 		"arguments",
