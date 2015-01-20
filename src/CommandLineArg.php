@@ -1,4 +1,6 @@
 <?php
+namespace mahlstrom;
+
 /**
  * Created by PhpStorm.
  * User: mahlstrom
@@ -6,27 +8,21 @@
  * Time: 15:31
  */
 
-namespace mahlstrom;
-
-/**
- * Class CommandLineArg
- *
- * @package mahlstrom
- */
 class CommandLineArg
 {
 
     private static $found = [];
-    private static $A = [];
+    private static $A = [
+    ];
 
     /**
      * @param $longName
      * @param $shortName
      * @param $description
      * @param bool $isReq
-     * @param null $argReqOrNull
+     * @param null $argReqOrNull Null=no argument, False=Not needed, True=required
      */
-    public static function addArgument($longName, $shortName, $description, $isReq = false, $argReqOrNull = null)
+    public static function addArguments($longName, $shortName, $description, $isReq = false, $argReqOrNull = null)
     {
         self::$A[$longName] = [
             'short'       => $shortName,
@@ -37,28 +33,29 @@ class CommandLineArg
     }
 
     /**
-     * @param bool|array $args
+     * @param array|bool $args
      * @return array
      */
-    public static function parse($args = false)
+    public static function parse($args=false)
     {
-        if ($args === false) {
-            echo 'OK';
+        if($args===false){
             global $argv;
             $args = $argv;
         }
+        // Remove first argument as it is the runfile itself
         unset($args[0]);
-        if ((count($args) >= 1 && in_array(current($args), ['-h', '--help'])) || !count($args)) {
+
+        // Check if we need to print the help
+        if ((in_array(current($args), ['-h', '--help'])) || !count($args)) {
             self::printHelp();
             return true;
+
         }
         while ($arg = current($args)) {
             if (substr($arg, 0, 2) == '--') {
-                echo $arg . PHP_EOL;
                 self::parseDoubleDash(substr($arg, 2));
             } elseif (substr($arg, 0, 1) == '-') {
                 self::parseSingleDash(substr($arg, 1), $args);
-            } else {
             }
             next($args);
         }
@@ -78,6 +75,63 @@ class CommandLineArg
     }
 
     /**
+     * @param $arg
+     * @param $args
+     * @return bool
+     */
+    private static function parseSingleDash($arg, &$args)
+    {
+        $argName = false;
+        foreach (self::$A as $argKey => $argAr) {
+            if ($argAr['short'] == $arg) {
+                $argName = $argKey;
+                break;
+            }
+        }
+        if ($argName) {
+            $value=self::parseValue($args, $argName);
+        } else {
+            self::notValidArgument($arg);
+            return false;
+        }
+//        echo $argName.' ';
+//        if($value===true){echo '(true)';}
+//        elseif($value===false){echo '(false)';}
+//        elseif($value===null){echo '(false)';}
+//        else{echo $value;}
+//
+//        echo PHP_EOL;
+
+        self::$found[$argName] = $value;
+        return true;
+    }
+
+    /**
+     * @param $arg
+     */
+    private static function parseDoubleDash($arg)
+    {
+        $argName = $arg;
+        $eqPos   = strpos($argName, '=');
+        $value   = false;
+        if ($eqPos) {
+            $value   = substr($argName, $eqPos + 1);
+            $argName = substr($argName, 0, $eqPos);
+        }
+
+        if (!array_key_exists($argName, self::$A)) {
+            self::notValidArgument($argName);
+        }
+        if (self::$A[$argName]['requireArg'] == true && $value == false) {
+            self::requiredError($argName);
+        } elseif (self::$A[$argName]['requireArg'] == false && $value == false) {
+            $value = true;
+        } elseif (self::$A[$argName]['requireArg'] == null && $value != false) {
+        }
+        self::$found[$argName] = $value;
+    }
+
+    /**
      * Prints help
      */
     public static function printHelp()
@@ -89,31 +143,22 @@ class CommandLineArg
         echo 'Usage: ' . $command . ' [OPTIONS]... ' . PHP_EOL;
 
         foreach (self::$A as $aKey => $aAr) {
-            echo sprintf('  -%-10s --%-15s %s', $aAr['short'], $aKey, $aAr['description']);
+            $short=$aAr['short'];
+            $long=$aKey;
+
+            if($aAr['requireArg']===true){
+                $short.=' <arg>';
+                $long.='=<arg>';
+            }elseif($aAr['requireArg']===false){
+                $short.=' [<arg>]';
+                $long.='[=<arg>]';
+            }
+            echo sprintf('  -%-10s --%-25s %s', $short, $long, $aAr['description']);
             if ($aAr['required']) {
                 echo ' (required)';
             }
             echo PHP_EOL;
         }
-    }
-
-    private static function parseDoubleDash($arg)
-    {
-        die();
-        $eqPos = strpos($arg, '=');
-        $value = false;
-        if ($eqPos) {
-            $value = substr($arg, $eqPos + 1);
-            $arg = substr($arg, 0, $eqPos);
-        }
-        if (!array_key_exists($arg, self::$A)) {
-            self::notValidArgument($arg);
-        }
-        if (self::$A[$arg]['requireArg'] == true && $value == false) {
-            self::requiredError($arg);
-        } elseif (self::$A[$arg]['requireArg'] == null) {
-        }
-        self::$found[$arg] = $value;
     }
 
     /**
@@ -125,48 +170,16 @@ class CommandLineArg
         throw new \InvalidArgumentException($arg . ' is not a valid argument');
     }
 
+
     private static function requiredError($argName)
     {
         throw new \InvalidArgumentException($argName . ' must have value.');
     }
 
-    private static function parseSingleDash($arg, &$args)
-    {
-        $argName = false;
-        foreach (self::$A as $argKey => $argAr) {
-            if ($argAr['short'] == $arg) {
-                $argName = $argKey;
-                break;
-            }
-        }
-        if ($argName) {
-            if (self::$A[$argName]['requireArg'] == true) {
-                $value = next($args);
-                if ($value == false || substr($value, 0, 1) == '-') {
-                    self::requiredError($argName);
-                }
-            } elseif (self::$A[$argName]['requireArg'] === false) {
-                $value = next($args);
-                if ($value == false) {
-                    $value = true;
-                } elseif (substr($value, 0, 1) == '-') {
-                    prev($args);
-                    $value = true;
-                }
-            } else {
-                $value = true;
-                prev($args);
-            }
-        } else {
-            self::notValidArgument($arg);
-        }
-        if (!isset($value)) {
-            echo $argName;
-            exit();
-        }
-        self::$found[$argName] = $value;
-    }
-
+    /**
+     * @param $string
+     * @return mixed
+     */
     public static function get($string)
     {
         if (array_key_exists($string, self::$found)) {
@@ -178,5 +191,37 @@ class CommandLineArg
     public static function reset() {
         self::$found=[];
         self::$A=[];
+    }
+
+    /**
+     * @param $args
+     * @param $argName
+     * @internal param $value
+     * @return bool|mixed
+     */
+    private static function parseValue(&$args, $argName)
+    {
+        if (self::$A[$argName]['requireArg'] == true) {
+            $value = next($args);
+            if ($value == false || substr($value, 0, 1) == '-') {
+                self::requiredError($argName);
+            }
+        } elseif (self::$A[$argName]['requireArg'] === false) {
+            $value = next($args);
+            if ($value == false) {
+                $value = true;
+            } elseif (substr($value, 0, 1) == '-') {
+                prev($args);
+                $value = true;
+            }
+        } else {
+            $test = next($args);
+            prev($args);
+            $value = true;
+            if ($test && substr($test, 0, 1) != '-') {
+                echo "$argName needs no argument" . PHP_EOL;
+            }
+        }
+        return $value;
     }
 }
