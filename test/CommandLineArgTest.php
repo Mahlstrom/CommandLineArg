@@ -36,6 +36,17 @@ class CommandLineArgTest extends \PHPUnit_Framework_TestCase
     /**
      * @test
      */
+    public function weShouldBeAbleToRunWithoutAnyArgumentsOrRequiredFlags()
+    {
+        $this->expectOutputString('');
+        CommandLineArg::reset();
+        CommandLineArg::addArgument('ano', 'a', 'Description');
+        CommandLineArg::parse(['']);
+    }
+
+    /**
+     * @test
+     */
     public function testAllGoodArguments()
     {
         $arguments = [
@@ -176,6 +187,7 @@ class CommandLineArgTest extends \PHPUnit_Framework_TestCase
 
     public function testMultipleChars()
     {
+        $this->expectOutputString('');
         CommandLineArg::reset();
         CommandLineArg::addArgument('ano', 'a', 'Description');
         CommandLineArg::addArgument('bnn', 'b', 'Description');
@@ -195,7 +207,7 @@ class CommandLineArgTest extends \PHPUnit_Framework_TestCase
         CommandLineArg::addArgument('dyo', 'd', 'Description', true);
         CommandLineArg::addArgument('eyn', 'e', 'Description', true, false);
         CommandLineArg::addArgument('fyy', 'f', 'Description', true, true);
-        CommandLineArg::parse(['', '-abc', 'magnus','-def','fa']);
+        CommandLineArg::parse(['', '-abc', 'magnus', '-def', 'fa']);
         $this->assertTrue(CommandLineArg::get('ano'));
         $this->assertEquals('magnus', CommandLineArg::get('cny'));
     }
@@ -214,5 +226,25 @@ class CommandLineArgTest extends \PHPUnit_Framework_TestCase
         CommandLineArg::parse(['', '-acb', 'magnus']);
         $this->assertTrue(CommandLineArg::get('ano'));
         $this->assertEquals('magnus', CommandLineArg::get('cny'));
+    }
+
+    /**
+     * @test
+     */
+    public function haveArgumentsWithAndWithoutFlags()
+    {
+        $this->expectOutputString('');
+        CommandLineArg::reset();
+        CommandLineArg::addArgument('ano', 'a', 'Description');
+        CommandLineArg::addArgument('bnn', 'b', 'Description');
+        CommandLineArg::parse(['', 'Arg1', '-a', 'FlagArg']);
+        $this->assertEquals('FlagArg', CommandLineArg::get('ano'));
+        $this->assertEquals('Arg1', CommandLineArg::getArgs()[0]);
+        CommandLineArg::reset();
+        CommandLineArg::addArgument('ano', 'a', 'Description');
+        CommandLineArg::addArgument('bnn', 'b', 'Description');
+        CommandLineArg::parse(['', '-a', 'FlagArg', 'Arg1']);
+        $this->assertEquals('FlagArg', CommandLineArg::get('ano'));
+        $this->assertEquals('Arg1', CommandLineArg::getArgs()[0]);
     }
 }

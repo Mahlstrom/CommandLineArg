@@ -12,6 +12,7 @@ class CommandLineArg
 {
 
     private static $arguments = [];
+    private static $flags = [];
     private static $found = [];
     private static $A = [
     ];
@@ -31,7 +32,7 @@ class CommandLineArg
      */
     public static function addArgument($longName, $character, $description, $isReq = false, $needsValue = null)
     {
-        self::$arguments[$longName] = (object)[
+        self::$flags[$longName] = (object)[
             'short'       => $character,
             'isRequired'  => $isReq,
             'needsValue'  => $needsValue,
@@ -60,7 +61,7 @@ class CommandLineArg
 #        unset($args[0]);
 
         // Check if we need to print the help
-        if ((in_array(current($args), ['-h', '--help'])) || !count($args)) {
+        if (in_array(current($args), ['-h', '--help'])) {
             self::printHelp();
             return true;
         }
@@ -72,6 +73,8 @@ class CommandLineArg
                     $arg = self::splitSingleDash($arg, $args);
                 }
                 self::parseSingleDash(substr($arg, 1), $args);
+            } else {
+                self::$arguments[] = $arg;
             }
             next($args);
         }
@@ -89,25 +92,6 @@ class CommandLineArg
         }
         return self::$found;
     }
-
-    private static function splitSingleDash($arg, &$ar)
-    {
-        $currKey = key($ar);
-        $b = str_split(substr($arg, 1));
-        $remKey = $currKey + count($b);
-        foreach ($b as $key => $val) {
-            $b[$key] = '-' . $val;
-        }
-        unset($ar[$currKey]);
-        array_splice($ar, $currKey, 0, $b);
-        array_slice($ar, -1, $remKey);
-        for ($i = 0; $i < $currKey; $i++) {
-            next($ar);
-        }
-        return $b[0];
-    }
-
-
 
     /**
      * Prints help
@@ -141,6 +125,61 @@ class CommandLineArg
 
     /**
      * @param $arg
+     * @throws \InvalidArgumentException
+     */
+    private static function parseDoubleDash($arg)
+    {
+        $eqPos = strpos($arg, '=');
+        if ($eqPos) {
+            $value = substr($arg, $eqPos + 1);
+            $flagName = substr($arg, 0, $eqPos);
+        } else {
+            $flagName = $arg;
+            $value = true;
+        }
+
+        if (!array_key_exists($flagName, self::$A)) {
+            throw new \InvalidArgumentException($flagName . ' is not a valid argument');
+        }
+        $value = self::parseValueArg($flagName, $value);
+        self::$found[$flagName] = $value;
+    }
+
+    /**
+     * @param $flagName
+     * @param $value
+     * @return mixed
+     * @throws \InvalidArgumentException
+     */
+    private static function parseValueArg($flagName, $value)
+    {
+        if (self::$flags[$flagName]->needsValue === true && $value === true) {
+            throw new \InvalidArgumentException($flagName . ' must have value.');
+        } elseif (self::$flags[$flagName]->needsValue === false && $value !== true) {
+            echo "$flagName needs no argument" . PHP_EOL;
+        }
+        return $value;
+    }
+
+    private static function splitSingleDash($arg, &$ar)
+    {
+        $currKey = key($ar);
+        $b = str_split(substr($arg, 1));
+        $remKey = $currKey + count($b);
+        foreach ($b as $key => $val) {
+            $b[$key] = '-' . $val;
+        }
+        unset($ar[$currKey]);
+        array_splice($ar, $currKey, 0, $b);
+        array_slice($ar, -1, $remKey);
+        for ($i = 0; $i < $currKey; $i++) {
+            next($ar);
+        }
+        return $b[0];
+    }
+
+    /**
+     * @param $arg
      * @param $args
      * @throws \InvalidArgumentException
      * @return bool
@@ -148,14 +187,14 @@ class CommandLineArg
     private static function parseSingleDash($arg, &$args)
     {
 
-        $argName = false;
+        $flagName = false;
         foreach (self::$A as $argKey => $argAr) {
             if ($argAr['short'] == $arg) {
-                $argName = $argKey;
+                $flagName = $argKey;
                 break;
             }
         }
-        if (!$argName) {
+        if (!$flagName) {
             throw new \InvalidArgumentException($arg . ' is not a valid argument');
         }
         $value = next($args);
@@ -165,47 +204,9 @@ class CommandLineArg
         } elseif ($value === false) {
             $value = true;
         }
-        $value = self::parseValueArg($argName, $value);
-        self::$found[$argName] = $value;
+        $value = self::parseValueArg($flagName, $value);
+        self::$found[$flagName] = $value;
         return true;
-    }
-
-    /**
-     * @param $arg
-     * @throws \InvalidArgumentException
-     */
-    private static function parseDoubleDash($arg)
-    {
-        $eqPos = strpos($arg, '=');
-        if ($eqPos) {
-            $value = substr($arg, $eqPos + 1);
-            $argName = substr($arg, 0, $eqPos);
-        } else {
-            $argName = $arg;
-            $value = true;
-        }
-
-        if (!array_key_exists($argName, self::$A)) {
-            throw new \InvalidArgumentException($argName . ' is not a valid argument');
-        }
-        $value = self::parseValueArg($argName, $value);
-        self::$found[$argName] = $value;
-    }
-
-    /**
-     * @param $argName
-     * @param $value
-     * @return mixed
-     * @throws \InvalidArgumentException
-     */
-    private static function parseValueArg($argName, $value)
-    {
-        if (self::$arguments[$argName]->needsValue === true && $value === true) {
-            throw new \InvalidArgumentException($argName . ' must have value.');
-        } elseif (self::$arguments[$argName]->needsValue === false && $value !== true) {
-            echo "$argName needs no argument" . PHP_EOL;
-        }
-        return $value;
     }
 
     /**
@@ -224,5 +225,14 @@ class CommandLineArg
     {
         self::$found = [];
         self::$A = [];
+    }
+
+    /**
+     * @return array
+     */
+    public static function getArgs()
+    {
+
+        return self::$arguments;
     }
 }
